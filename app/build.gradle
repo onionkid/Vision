@@ -4,8 +4,8 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "iot.vision.baktin.com.vision"
-        minSdkVersion 25
-        targetSdkVersion 26
+        minSdkVersion 27
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -16,15 +16,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            assets.srcDirs = ['./assets']
+        }
+    }
+    // Required to enable TF Lite to read model files directly from assets/
+    aaptOptions {
+        noCompress "tflite"
+    }
     buildToolsVersion '27.0.3'
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.android.support:design:26.0.0'
+    compile 'com.android.support:design:27.0.0'
     compileOnly 'com.google.android.things:androidthings:0.7-devpreview'
     implementation 'com.google.android.gms:play-services-vision:11.0.4'
-    compile 'org.tensorflow:tensorflow-lite:+'
+    //compile 'org.tensorflow:tensorflow-lite:+'
+    implementation 'org.tensorflow:tensorflow-android:+'
+    compile 'com.github.mjdev:libaums:0.5.5'
     implementation project(':openCVLibrary341')
 }

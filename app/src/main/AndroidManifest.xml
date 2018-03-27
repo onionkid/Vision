@@ -4,12 +4,16 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_STORAGE" />
+    <uses-permission android:name="android.permission.USB_PERMISSION" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-permission android:name="com.google.android.things.permission.MANAGE_INPUT_DRIVERS" />
 
-    <application>
+    <application
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <uses-library android:name="com.google.android.things" />
 
         <activity android:name=".FaceIDActivity">
@@ -24,6 +28,7 @@
                 <category android:name="android.intent.category.IOT_LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter> <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" /> </intent-filter>
         </activity>
     </application>
 
