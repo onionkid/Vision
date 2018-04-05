@@ -26,8 +26,10 @@ import com.google.android.gms.vision.face.Landmark;
 import junit.framework.Assert;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Vector;
 
+import iot.vision.baktin.com.vision.opencvprocessor.OpenCVImageProcessor;
 import iot.vision.baktin.com.vision.tensor.Classifier;
 import iot.vision.baktin.com.vision.tensor.TensorFlowImageClassifier;
 
@@ -58,24 +60,6 @@ public class ImageProcessor {
         return drawCircles(getProcessFaces(image, context),image,1.0);
     }
 
-//    public Vector<Bitmap> getFacesBmp(Bitmap image, Context context)
-//    {
-//        Vector<Bitmap> vFaces = new Vector<Bitmap>();
-//        SparseArray<Face> sFaces = getProcessFaces(image, context);
-//
-//        for(int i=0;i<sFaces.size();i++)
-//        {
-//            Face face = sFaces.valueAt(i);
-//            Bitmap faceBitmap = Bitmap.createBitmap(image,
-//                    (int) face.getPosition().x,
-//                    (int) face.getPosition().y,
-//                    (int) face.getWidth(),
-//                    (int) face.getHeight());
-//
-//            vFaces.add(faceBitmap);
-//        }
-//    }
-
     private SparseArray<Face> getProcessFaces(Bitmap image,Context context)
     {
         FaceDetector detector = new FaceDetector.Builder(context)
@@ -88,7 +72,7 @@ public class ImageProcessor {
         Frame frame = new Frame.Builder().setBitmap(image).build();
         SparseArray<Face> faces = safeDetector.detect(frame);
 
-        Log.d(TAG,"[KA]Faces detected: "+faces.size());
+        Log.d(TAG,"#Faces detected: "+faces.size());
 
         if (!safeDetector.isOperational()) {
             // Note: The first time that an app using face API is installed on a device, GMS will
@@ -107,7 +91,7 @@ public class ImageProcessor {
             boolean hasLowStorage = context.registerReceiver(null, lowstorageFilter) != null;
 
             if (hasLowStorage) {
-                Log.w(TAG, "low storage");
+                Log.w(TAG, "[Google Vision] Low storage warning.");
             }
         }
 
@@ -118,6 +102,7 @@ public class ImageProcessor {
         // Although detector may be used multiple times for different images, it should be released
         // when it is no longer needed in order to free native resources.
         safeDetector.release();
+
         return faces;
     }
 
@@ -151,35 +136,126 @@ public class ImageProcessor {
         String name = data.getTitle();
         String confidence = data.getConfidence().toString();
 
+        //paint settings for rectange on face
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(5);
         paint.setColor(Color.CYAN);
+
 
         float left = (float)(face.getPosition().x * scale);
         float top = (float)(face.getPosition().y * scale);
         float right = (float)((face.getPosition().x + face.getWidth()) * scale);
         float bottom = (float)((face.getPosition().y + face.getHeight()) * scale);
 
+        //draw the rectangle on face detected
+        if(data.getConfidence()==0f)
+        {
+            paint.setColor(Color.DKGRAY);
+        }
+
         canvas.drawRect(left,top,right,bottom,paint);
 
-
-
+        //convert to human readable percentage
         String conf = String.format("%.2f",Float.parseFloat(confidence)*100)+"%";
 
         Log.d(TAG,"DETECTED:::"+name+" -> "+conf+" %");
-        String faceLabel = name+"   "+conf+"% ";
-        float xpos = bottom;
-        float ypos = left/2f;
+        String faceLabel = name+"  "+conf+"% ";
+        float xpos = left;
+        float ypos = bottom+15;
 
+        //paint settings for text
         TextPaint txtpaint = new TextPaint();
         txtpaint.setColor(Color.YELLOW);
-        txtpaint.setTextAlign(Paint.Align.CENTER);
-        //x , y
+        txtpaint.setTextAlign(Paint.Align.LEFT);
+
+        //draw the name and confidence level
         canvas.drawText(faceLabel,xpos,ypos,txtpaint);
     }
 
-    public Bitmap classifyFace(TensorFlowImageClassifier tClassifier, Bitmap image, Context context)
+    public class ProcessorData
+    {
+        public Bitmap getFace() {
+            return face;
+        }
+
+        public void setFace(Bitmap face) {
+            this.face = face;
+        }
+
+        public Classifier.Recognition getRecognition() {
+            return recognition;
+        }
+
+        public void setRecognition(Classifier.Recognition recognition) {
+            this.recognition = recognition;
+        }
+
+        private Bitmap face;
+        private Classifier.Recognition recognition;
+    }
+
+    public class ProcessorResult
+    {
+        ArrayList<ProcessorData> resultData = new ArrayList<ProcessorData>();
+        Bitmap finalImage;
+    }
+
+    public ProcessorResult classifyFace(TensorFlowImageClassifier tClassifier, Bitmap image, Context context)
+    {
+        Log.d(TAG,"[KA]START IMAGE CLASSIFY!!!");
+        int w = image.getWidth(), h = image.getHeight();
+
+        Bitmap bmp = image.copy(Bitmap.Config.ARGB_8888,true);
+        Canvas canvas = new Canvas(bmp);
+        canvas.setBitmap(bmp);
+
+        SparseArray<Face> sFaces = getProcessFaces(image, context);
+
+        ProcessorResult result = new ProcessorResult();
+
+        for(int i=0;i<sFaces.size();i++)
+        {
+            Face face = sFaces.valueAt(i);
+
+//            Log.d(TAG,"IMAGE X:"+face.getPosition().x);
+//            Log.d(TAG,"IMAGE Y:"+face.getPosition().y);
+//            Log.d(TAG,"IMAGE W:"+face.getWidth());
+//            Log.d(TAG,"IMAGE H:"+face.getHeight());
+
+            try {
+                Bitmap faceBitmap = Bitmap.createBitmap(image,
+                        Math.abs((int) face.getPosition().x),
+                        Math.abs((int) face.getPosition().y),
+                        (int) face.getWidth(),
+                        (int) face.getHeight());
+
+                Classifier.Recognition recognition = new Classifier.Recognition("", "", 0f);
+                Log.d(TAG,"[KA]START TENSOR");
+                recognition = tClassifier.getTensorResult(androidGrayScale(faceBitmap));
+                Log.d(TAG,"[KA]END TENSOR");
+
+                Log.d(TAG,"[KA]START DRAW");
+                drawRectangleOnFace(face, canvas, recognition, 1f);
+                Log.d(TAG,"[KA]END DRAW");
+
+                ProcessorData prRes = new ProcessorData();
+                prRes.setFace(faceBitmap);
+                prRes.setRecognition(recognition);
+
+                result.resultData.add(prRes);
+            }catch (Exception a)
+            {
+                a.printStackTrace();
+                Log.d(TAG,"bitmap exception.");
+            }
+        }
+        result.finalImage = bmp;
+        Log.d(TAG,"[KA]END IMAGE CLASSIFY!!!");
+        return result;
+    }
+
+    public Bitmap classifyFace(OpenCVImageProcessor topenCV, Bitmap image, Context context)
     {
         int w = image.getWidth(), h = image.getHeight();
 
@@ -204,8 +280,10 @@ public class ImageProcessor {
                     (int) face.getWidth(),
                     (int) face.getHeight());
 
-            Classifier.Recognition recognition = tClassifier.getTensorResult(androidGrayScale(faceBitmap));
+            Classifier.Recognition recognition = new Classifier.Recognition("","",0f);
+            recognition = topenCV.getOpenCVResult(androidGrayScale(faceBitmap));
             drawRectangleOnFace(face,canvas,recognition,1f);
+
         }
 
         return bmp;

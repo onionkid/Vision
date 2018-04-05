@@ -42,7 +42,7 @@ import static android.content.Context.CAMERA_SERVICE;
 public class CameraHandler {
     private static final String TAG = CameraHandler.class.getSimpleName();
 
-    public static final int IMAGE_WIDTH = 640;
+    public static final int IMAGE_WIDTH = 800;
     public static final int IMAGE_HEIGHT = 480;
 
     private static final int MAX_IMAGES = 1;

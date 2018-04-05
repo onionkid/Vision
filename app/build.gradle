@@ -31,11 +31,19 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.android.support:recyclerview-v7:27.0.0'
     compile 'com.android.support:design:27.0.0'
+    compile 'com.android.support:appcompat-v7:27.0.0'
     compileOnly 'com.google.android.things:androidthings:0.7-devpreview'
     implementation 'com.google.android.gms:play-services-vision:11.0.4'
     //compile 'org.tensorflow:tensorflow-lite:+'
     implementation 'org.tensorflow:tensorflow-android:+'
-    compile 'com.github.mjdev:libaums:0.5.5'
-    implementation project(':openCVLibrary341')
+    compile 'com.github.mjdev:libaums:+'
+    compile 'org.bytedeco:javacv:+'
+    compile 'org.bytedeco.javacpp-presets:opencv:3.0.0-1.1:android-x86'
+    compile 'org.bytedeco.javacpp-presets:ffmpeg:2.8.1-1.1:android-x86'
+    compile 'org.bytedeco.javacpp-presets:opencv:3.0.0-1.1:android-arm'
+    compile 'org.bytedeco.javacpp-presets:ffmpeg:2.8.1-1.1:android-arm'
+    implementation project(':openCVLibrary2411')
+    compile project(':ftp-server')
 }
