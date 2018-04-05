@@ -599,5 +599,13 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
         }
     };
 
-
+    /*
+    * Check if target is a mobile device or Android Things
+    * */
+    private boolean checkDeviceModule(Context context){
+        final PackageManager pm = context.getPackageManager();
+        boolean isRunningAndroidThings = pm.hasSystemFeature("android.hardware.type.embedded");
+        Log.d(TAG, "isRunningAndroidThings: " + isRunningAndroidThings);
+        return isRunningAndroidThings;
+    }
 }
