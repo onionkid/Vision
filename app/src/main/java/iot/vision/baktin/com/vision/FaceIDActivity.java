@@ -135,6 +135,16 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(checkDeviceModule(this))
+        {
+            Log.d(TAG,"ANDROID THINGS!");
+        }
+        else
+        {
+            Log.d(TAG,"NOT ANDROID THINGS. MAYBE MOBILE. :)");
+        }
+
         setContentView(R.layout.gvision_activity);
 
         //initialize the image view
