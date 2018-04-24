@@ -20,6 +20,13 @@
     <application
         android:theme="@style/AppFullScreenTheme">
         <uses-library android:name="com.google.android.things" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <meta-data
+            android:name="com.google.android.gms.vision.DEPENDENCIES"
+            android:value="face" />
 
         <activity android:name=".FaceIDActivity" android:launchMode="singleTask">
             <intent-filter>

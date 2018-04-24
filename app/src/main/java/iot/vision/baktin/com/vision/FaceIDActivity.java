@@ -43,6 +43,7 @@ import com.github.mjdev.libaums.fs.UsbFileInputStream;
 import com.google.android.things.pio.Gpio;
 import com.kevalpatel2106.ftp_server.FTPManager;
 
+import org.bytedeco.javacv.FrameFilter;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -86,7 +87,7 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
     private static final int MY_PERMISSIONS_REQUEST_ACCOUNTS = 1;
 
     private static int MAX_LIST = 20;
-    private static int PIC_DELAY = 2000;
+    private static int PIC_DELAY = 1500;
     private static String TAG = FaceIDActivity.class.getCanonicalName();
 
     private Context context;
@@ -104,6 +105,7 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
     private FloatingActionButton fab;
     private RecyclerView mImageList;
     private TextView mIPAdd;
+    private TextView mProgressText;
 
     private ArrayList<ImageItem> imageItemList;
 
@@ -145,13 +147,14 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
             Log.d(TAG,"NOT ANDROID THINGS. MAYBE MOBILE. :)");
         }
 
-        setContentView(R.layout.gvision_activity);
+        setContentView(R.layout.gvision_activity2);
 
         //initialize the image view
         mImageView = findViewById(R.id.preview);
         mIPAdd = findViewById(R.id.txtIpAddress);
         mProgressBar = findViewById(R.id.progressLayout);
         mProgressBarTensor = findViewById(R.id.progressTensor);
+        mProgressText = findViewById(R.id.progressText);
 
         fab = findViewById(R.id.fab);
 
@@ -347,26 +350,33 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
     private Runnable mInitializeOnBackground = new Runnable() {
         @Override
         public void run() {
+            boolean isGraphLoaded = false;
+
+            showProgressBar(true);
             mCameraHandler = CameraHandler.getInstance();
             mCameraHandler.initializeCamera(
                     context, mBackgroundHandler,
                     FaceIDActivity.this);
             Log.d(TAG,"INITIAIZE CAMERA");
 
-            showProgressBar(true);
 
             if(detectMode == TENSOR_MODE)
             {
-                loadGraphFile();
+                isGraphLoaded = loadGraphFile();
             }else if(detectMode == OPENCV_MODE)
             {
                 loadOpenCVFile();
             }
 
-
-            showProgressBar(false);
-
-            setReady(true);
+            if(isGraphLoaded) {
+                Log.d(TAG,"Graph is loaded. Close progress dialog. Ready for capture.");
+                showProgressBar(false);
+                setReady(true);
+            }
+            else
+            {
+                Log.d(TAG,"GRAPH FILE NOT LOADED");
+            }
 
         }
     };
@@ -379,18 +389,40 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
         else {
             progressBarVisible = View.GONE;
             //show update button
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    fab.setVisibility(View.VISIBLE);
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    fab.setVisibility(View.VISIBLE);
+//                }
+//            });
         }
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mProgressBar.setVisibility(progressBarVisible);
+                if(mProgressBar.getVisibility() != progressBarVisible)
+                    mProgressBar.setVisibility(progressBarVisible);
+            }
+        });
+    }
+
+    private void showProgressBar(boolean show, final String text)
+    {
+        if(show){
+            progressBarVisible = View.VISIBLE;
+        }
+        else {
+            progressBarVisible = View.GONE;
+        }
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mProgressText.setText(text);
+                if(mProgressBar.getVisibility() != progressBarVisible) {
+                    mProgressBar.setVisibility(progressBarVisible);
+                }
+
             }
         });
     }
@@ -435,9 +467,11 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
 
                 // determine if connected device is a mass storage devuce
                 if (device != null) {
+                    showProgressBar(true);
                     setReady(false);
                     loadGraphFile();
                     setReady(true);
+                    showProgressBar(false);
                 }
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -462,13 +496,15 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
 
 
         try (Image image = reader.acquireNextImage()) {
-            setReady(false);
+
 
             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
             Bitmap myBitmap = BitmapFactory.decodeByteArray(bytes,0,bytes.length,null);
+            image.close();
 
+            setReady(false);
             showProgressBarTensor(true);
 
             if(detectMode == TENSOR_MODE)
@@ -525,11 +561,10 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
         }
     }
 
-    private void loadGraphFile()
+    private boolean loadGraphFile()
     {
+        boolean retVal = false;
         try {
-
-
             UsbFile root = UsbHelper.getInstance().getRootDir(context);
             Log.d(TAG,"ROOT::: "+root.getName());
 
@@ -551,6 +586,7 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
 
                 Log.d(TAG,"[tensor] initializing classifier.");
                 mTensorFlowClassifier = new TensorFlowImageClassifier(context,isGraph,isLabel);
+                retVal = true;
                 Log.d(TAG,"[tensor] done initializing classifier.");
             }
             else
@@ -558,12 +594,11 @@ public class FaceIDActivity extends AppCompatActivity implements  ImageReader.On
                 Log.d(TAG,"FILES NULL");
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
         //init tensorflow once the pb files area loaded
-
+        return retVal;
     }
 
     private void cleanUp()

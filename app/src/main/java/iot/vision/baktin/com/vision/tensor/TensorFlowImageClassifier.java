@@ -128,18 +128,22 @@ public class TensorFlowImageClassifier implements Classifier {
      *              and power consuming.
      */
     public List<Classifier.Recognition> doRecognize(Bitmap image) {
-        Log.d(TAG, "Start recognition...");
+        Log.d(TAG, "[KA]Start recognition...");
         float[] pixels = VisionHelper.getInstance().getPixels(image, intValues, floatValues);
 
+        Log.d(TAG, "[KA] tensor feed start");
         // Feed the pixels of the image into the TensorFlow Neural Network
-        inferenceInterface.feed(VisionHelper.INPUT_NAME, pixels,
-                VisionHelper.NETWORK_STRUCTURE);
+        inferenceInterface.feed(VisionHelper.INPUT_NAME, pixels,VisionHelper.NETWORK_STRUCTURE);
+        Log.d(TAG, "[KA] tensor feed end");
 
+        Log.d(TAG, "[KA] tensor run start");
         // Run the TensorFlow Neural Network with the provided input
         inferenceInterface.run(VisionHelper.OUTPUT_NAMES);
+        Log.d(TAG, "[KA] tensor run end");
 
         // Extract the output from the neural network back into an array of confidence per category
         inferenceInterface.fetch(VisionHelper.OUTPUT_NAME, outputs);
+        Log.d(TAG, "[KA]End recognition...");
 
         // Get the results with the highest confidence and map them to their labels
         return VisionHelper.getBestResults(outputs, labels);

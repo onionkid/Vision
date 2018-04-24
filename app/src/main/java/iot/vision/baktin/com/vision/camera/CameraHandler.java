@@ -34,6 +34,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
+import android.view.Surface;
 
 import java.util.Collections;
 
@@ -48,6 +49,9 @@ public class CameraHandler {
     private static final int MAX_IMAGES = 1;
     private CameraDevice mCameraDevice;
     private CameraCaptureSession mCaptureSession;
+
+    private CaptureRequest mPreviewRequest;
+    private CaptureRequest.Builder mPreviewReqBuilder;
     /**
      * An {@link ImageReader} that handles still image capture.
      */
@@ -161,17 +165,33 @@ public class CameraHandler {
             new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+                    Log.d(TAG,"CAMERACAPTURE SESSION ON CONFIGURE");
                     // The camera is already closed
                     if (mCameraDevice == null) {
+                        Log.d(TAG,"CAMERACAPTURE CAMERA DEVICE NULL");
                         return;
                     }
                     // When the session is ready, we start capture.
                     mCaptureSession = cameraCaptureSession;
                     triggerImageCapture();
+
                 }
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
                     Log.w(TAG, "Failed to configure camera");
+                }
+
+                @Override
+                public void onActive(@NonNull CameraCaptureSession session) {
+                    super.onActive(session);
+                    Log.d(TAG,"CAMERACAPTURE SESSION ON ACTIVE");
+
+                }
+
+                @Override
+                public void onReady(@NonNull CameraCaptureSession session) {
+                    super.onReady(session);
+                    Log.d(TAG,"CAMERACAPTURE SESSION ON READY");
                 }
             };
     /**
@@ -180,15 +200,24 @@ public class CameraHandler {
     private void triggerImageCapture() {
         try {
             final CaptureRequest.Builder captureBuilder =
-                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureBuilder.addTarget(mImageReader.getSurface());
+
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
             Log.d(TAG, "Capture request created.");
+
             mCaptureSession.capture(captureBuilder.build(), mCaptureCallback, null);
+
         } catch (CameraAccessException cae) {
+            cae.printStackTrace();
             Log.d(TAG, "camera capture exception");
+        } catch (IllegalStateException e)
+        {
+            e.printStackTrace();
+            Log.d(TAG,"camera illegal state");
         }
     }
+
     /**
      * Callback handling capture session events
      */

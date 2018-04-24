@@ -19,6 +19,10 @@ public class VisionHelper {
     public static final int IMAGE_MEAN = 128;
     public static final float IMAGE_STD = 128f;
 
+//    public static final int IMAGE_SIZE = 224;
+//    public static final int IMAGE_MEAN = 117;
+//    public static final float IMAGE_STD = 1;
+
 
     public static long[] NETWORK_STRUCTURE = {1, IMAGE_SIZE, IMAGE_SIZE, 3};
     public static final int NUM_CLASSES = 10;

@@ -15,10 +15,31 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/preview"
-        android:layout_width="640px"
-        android:layout_height="match_parent" />
+    <LinearLayout
+        android:id="@+id/llayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible">
+
+      <ImageView
+          android:id="@+id/preview"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_weight="20"
+          android:background="#f5fd67"
+          android:visibility="visible" />
+
+      <android.support.v7.widget.RecyclerView
+          android:id="@+id/imageList"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_toRightOf="@+id/preview"
+          android:layout_weight="90"
+          android:background="#8c9900"
+          android:scrollbars="vertical"
+          android:visibility="visible" />
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/progressTensor"
@@ -52,20 +73,12 @@
         app:backgroundTint="@android:color/holo_purple"
         app:fabSize="mini" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/imageList"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_toRightOf="@+id/preview"
-        android:background="#a100ff"
-        android:scrollbars="vertical" />
-
     <RelativeLayout
         android:id="@+id/progressLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:visibility="gone">
+        android:visibility="visible">
 
       <ProgressBar
           android:id="@+id/progressBar"
@@ -74,6 +87,7 @@
           android:layout_height="wrap_content"
           android:layout_centerHorizontal="true"
           android:layout_centerVertical="true"
+          android:progressTint="#c0ca33"
           android:visibility="visible" />
 
       <TextView
